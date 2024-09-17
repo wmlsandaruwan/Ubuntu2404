@@ -1,18 +1,21 @@
 #!/bin/bash
 
-# Function to update hostname
+# Function to update the hostname
 update_hostname() {
     local new_hostname=$1
+
     echo "Changing hostname to $new_hostname"
-    
-    # Update the hostname in the /etc/hostname file
-    echo $new_hostname > /etc/hostname
-    
-    # Update the hostname in the /etc/hosts file
-    sed -i "s/127.0.1.1.*/127.0.1.1 $new_hostname/g" /etc/hosts
-    
-    # Apply the new hostname immediately
+
+    # Update /etc/hostname
+    echo "$new_hostname" > /etc/hostname
+
+    # Update /etc/hosts (replace old hostname with new one)
+    sed -i "s/$(hostname)/$new_hostname/g" /etc/hosts
+
+    # Apply the new hostname
     hostnamectl set-hostname $new_hostname
+
+    echo "Hostname changed successfully to $new_hostname"
 }
 
 # Function to update the network configuration
@@ -25,13 +28,18 @@ update_network_config() {
 
     echo "Changing network configuration"
     
-    # The configuration file for Netplan (used in Ubuntu 24.04)
+    # The configuration file for Netplan
     netplan_config_file="/etc/netplan/00-installer-config.yaml"
 
-    # Backup the current configuration
-    cp $netplan_config_file $netplan_config_file.bak
+    # Check if the file exists, otherwise create it
+    if [ -f "$netplan_config_file" ]; then
+        # Backup the current configuration
+        cp $netplan_config_file $netplan_config_file.bak
+    else
+        touch $netplan_config_file
+    fi
 
-    # Update the network configuration
+    # Update the network configuration with default route syntax
     cat > $netplan_config_file <<EOL
 network:
   version: 2
@@ -39,40 +47,45 @@ network:
     ens18:
       addresses:
         - $new_ip/$subnet_mask
-      gateway4: $gateway
+      routes:
+        - to: 0.0.0.0/0
+          via: $gateway
       nameservers:
         addresses:
           - $primary_dns
           - $secondary_dns
 EOL
 
+    # Fix the file permissions
+    chmod 600 $netplan_config_file
+
     # Apply the network configuration
     netplan apply
+
+    echo "Network configuration applied successfully!"
 }
 
-# Main script execution
-
-# Prompt the user for input
-echo "Enter the new hostname:"
+# Main script logic
+echo "Enter new hostname: "
 read new_hostname
 
-echo "Enter the new IP address (e.g., 192.168.1.100):"
+echo "Enter new IP address (e.g., 192.168.1.10): "
 read new_ip
 
-echo "Enter the subnet mask (e.g., 24 for 255.255.255.0):"
+echo "Enter subnet mask (e.g., 24 for 255.255.255.0): "
 read subnet_mask
 
-echo "Enter the default gateway (e.g., 192.168.1.1):"
+echo "Enter default gateway: "
 read gateway
 
-echo "Enter the primary DNS (e.g., 8.8.8.8):"
+echo "Enter primary DNS: "
 read primary_dns
 
-echo "Enter the secondary DNS (e.g., 8.8.4.4):"
+echo "Enter secondary DNS (optional): "
 read secondary_dns
 
-# Call the functions to update the hostname and network configuration
+# Call the functions
 update_hostname $new_hostname
 update_network_config $new_ip $subnet_mask $gateway $primary_dns $secondary_dns
 
-echo "Changes applied successfully!"
+echo "All changes applied! System hostname and network configuration updated."
