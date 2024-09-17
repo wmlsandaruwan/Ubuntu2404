@@ -19,3 +19,8 @@ Run it:
 bash
 Copy code
 sudo ./update_server.sh
+
+--------------------------
+If there will be a previous IP 
+ip addr del 10.10.10.25/24 dev ens18
+
