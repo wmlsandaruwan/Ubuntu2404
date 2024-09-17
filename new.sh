@@ -92,4 +92,8 @@ read secondary_dns
 update_hostname $new_hostname
 update_network_config $new_ip $subnet_mask $gateway $primary_dns $secondary_dns
 
+# Restart networking service to ensure all changes are applied
+echo "Restarting networking service..."
+systemctl restart systemd-networkd
+
 echo "All changes applied! System hostname and network configuration updated."
