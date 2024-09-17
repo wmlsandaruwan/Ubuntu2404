@@ -21,6 +21,6 @@ Copy code
 sudo ./update_server.sh
 
 --------------------------
-If there will be a previous IP 
+If there will be a previous IP Run this - 
 ip addr del 10.10.10.25/24 dev ens18
 
