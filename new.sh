@@ -39,12 +39,16 @@ update_network_config() {
         touch $netplan_config_file
     fi
 
+    # Ensure the interface is cleared of any previous IP configuration
+    ip addr flush dev ens18
+
     # Update the network configuration with default route syntax
     cat > $netplan_config_file <<EOL
 network:
   version: 2
   ethernets:
     ens18:
+      dhcp4: no
       addresses:
         - $new_ip/$subnet_mask
       routes:
